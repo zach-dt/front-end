@@ -1,0 +1,9 @@
+---
+applications:
+- name: front-end
+  memory: 512M
+  instances: 1
+  docker:
+    image: jbraeuer/front-end
+  env:
+    DOMAIN: .apps.pcfeu.dev.dynatracelabs.com

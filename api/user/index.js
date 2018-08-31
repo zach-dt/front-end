@@ -186,6 +186,7 @@
         };
 
         console.log("Posting Customer: " + JSON.stringify(req.body));
+        console.log("registerUrl " + endpoints.registerUrl);
 
         async.waterfall([
                 function(callback) {

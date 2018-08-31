@@ -6,7 +6,7 @@
 
   casper.test.begin("User buys some socks", 5, function(test) {
     // initial load and login
-    casper.start("http://front-end:8080/", function() {
+    casper.start("https://front-end.apps.pcfeu.dev.dynatracelabs.com/", function() {
       this.clickLabel("Login");
       this.fill("#login-modal form", {
         "username": "Eve_Berger",
@@ -70,7 +70,7 @@
       }, function() {
         console.log("dumping page screenshot as PNG")
         var cap = casper.captureBase64("png");
-        console.log(cap);
+        //console.log(cap);
         console.log("DONE");
         test.fail("user was not taken to the orders page");
       }, 3000);

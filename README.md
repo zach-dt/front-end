@@ -1,14 +1,8 @@
-[![Build Status](https://travis-ci.org/microservices-demo/front-end.svg?branch=master)](https://travis-ci.org/microservices-demo/front-end)
-[![](https://images.microbadger.com/badges/image/weaveworksdemos/front-end.svg)](http://microbadger.com/images/weaveworksdemos/front-end "Get your own image badge on microbadger.com")
+# front-end
 
+## Build
 
-Front-end app
----
-Front-end application written in [Node.js](https://nodejs.org/en/) that puts together all of the microservices under [microservices-demo](https://github.com/microservices-demo/microservices-demo).
-
-# Build
-
-## Dependencies
+### Dependencies
 
 <table>
   <thead>
@@ -33,29 +27,29 @@ Front-end application written in [Node.js](https://nodejs.org/en/) that puts tog
   </tbody>
 </table>
 
-## Node
+### Node
 
 `npm install`
 
-## Docker
+### Docker
 
 `make test-image`
 
-## Docker Compose
+### Docker Compose
 
 `make up`
 
-# Test
+## Test
 
 **Make sure that the microservices are up & running**
 
-## Unit & Functional tests:
+### Unit & Functional tests:
 
 ```
 make test
 ```
 
-## End-to-End tests:
+### End-to-End tests:
   
 To make sure that the test suite is running against the latest (local) version with your changes, you need to manually build
 the image, run the container and attach it to the proper Docker networks.
@@ -72,26 +66,26 @@ Then you can run the tests with:
 make e2e
 ```
 
-# Run
+## Run
 
-## Node
+### Node
 
 `npm start`
 
-## Docker
+### Docker
 
 `make server`
 
-# Use
+## Use
 
-## Node
+### Node
 
 `curl http://localhost:8081`
 
-## Docker Compose
+### Docker Compose
 
 `curl http://localhost:8080`
 
-# Push
+## Push
 
 `GROUP=weaveworksdemos COMMIT=test ./scripts/push.sh`

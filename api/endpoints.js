@@ -14,6 +14,14 @@
     }
   });
 
+  if (domain == "") {
+    console.log(process.env.DOMAIN);
+    if (process.env.DOMAIN != undefined) {
+      console.log("Setting domain to default (for PCF): .apps.pcfeu.dev.dynatracelabs.com");
+      domain = process.env.DOMAIN;
+    }
+  }
+
   module.exports = {
     catalogueUrl:  util.format("http://catalogue%s", domain),
     tagsUrl:       util.format("http://catalogue%s/tags", domain),
