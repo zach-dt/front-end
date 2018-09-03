@@ -5,5 +5,5 @@ applications:
   instances: 1
   docker:
     image: jbraeuer/front-end
-  #env:
-  #  DOMAIN: .apps.pcfeu.dev.dynatracelabs.com
+  env:
+    DOMAIN: .apps.pcfeu.dev.dynatracelabs.com
