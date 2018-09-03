@@ -4,7 +4,7 @@ pipeline {
     }
     environment {
       ORG               = 'acm-workshop'
-      APP_NAME          = 'sockshop-ws'
+      APP_NAME          = 'front-end'
       CHARTMUSEUM_CREDS = credentials('jenkins-x-chartmuseum')
     }
     stages {
