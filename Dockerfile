@@ -16,5 +16,5 @@ RUN yarn install
 COPY . /usr/src/app
 
 # Start the app
-# CMD ["/usr/local/bin/npm", "start", "--domain=apps.pcfeu.dev.dynatracelabs.com"] << Paramater does not work, but is needed for all endpoints.
-CMD ["/usr/local/bin/npm", "start"]
+CMD ["/usr/local/bin/npm", "start", "--domain=.jx-staging.35.241.184.104.nip.io"] 
+#CMD ["/usr/local/bin/npm", "start"]
