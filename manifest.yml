@@ -4,7 +4,7 @@ applications:
   memory: 512M
   instances: 1
   docker:
-    image: DOCKER-HUB-ACCOUNT/front-end
+    image: DOCKER_HUB_ACCOUNT/front-end
   env:
     DOMAIN: .apps.pcfeu.dev.dynatracelabs.com
     DT_NODE_ID: APPNAME
