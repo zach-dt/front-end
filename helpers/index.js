@@ -76,10 +76,12 @@
    * });
    */
   helpers.simpleHttpRequest = function(url, res, next) {
-    request.get(url, function(error, response, body) {
-      if (error) return next(error);
-      helpers.respondSuccessBody(res, body);
-    }.bind({res: res}));
+    setTimeout(() => {
+      request.get(url, function(error, response, body) {
+        if (error) return next(error);
+        helpers.respondSuccessBody(res, body);
+      }.bind({res: res}));
+    }, req.app.get('regression-request-latency') || 0);
   }
 
   /* TODO: Add documentation */
