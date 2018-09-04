@@ -15,9 +15,13 @@ var request      = require("request")
   , metrics      = require("./api/metrics")
   , app          = express()
 
-// Regression scenarios
-app.set('request-latency', 0);
-app.set('request-latency-catalogue', 0);
+
+global.acmws = {};
+  
+global.acmws['request-latency'] = 0;
+global.acmws['request-latency-catalogue'] = 0;
+global.acmws['response-error-probability'] = 0;
+
 
 app.use(helpers.rewriteSlash);
 app.use(metrics);
@@ -44,6 +48,16 @@ process.argv.forEach(function (val, index, array) {
       domain = arg[1];
       console.log("Setting domain to:", domain);
     }
+  }
+});
+
+app.use((req, res, next) => {
+  const r = Math.random();
+  console.log(`${r} <= ${global.acmws['response-error-probability']}`)
+  if(r <= global.acmws['response-error-probability']) {
+    return res.status(500).send('Something broke!');
+  } else {
+    return next();
   }
 });
 

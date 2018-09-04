@@ -81,7 +81,7 @@
         if (error) return next(error);
         helpers.respondSuccessBody(res, body);
       }.bind({res: res}));
-    }, req.app.get('request-latency') || 0);
+    }, global.acmws['request-latency'] || 0);
   }
 
   /* TODO: Add documentation */
