@@ -17,4 +17,4 @@ COPY . /usr/src/app
 
 # Start the app
 # ENTRYPOINT ["/usr/local/bin/npm", "start", "--domain=.apps.pcfeu.dev.dynatracelabs.com"]
-#CMD ["/usr/local/bin/npm", "start"]
+CMD ["/usr/local/bin/npm", "start"]
