@@ -5,6 +5,7 @@
 
   var domain = "";
   process.argv.forEach(function (val, index, array) {
+    console.log("Paramater " + val);
     var arg = val.split("=");
     if (arg.length > 1) {
       if (arg[0] == "--domain") {
