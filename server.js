@@ -15,6 +15,9 @@ var request      = require("request")
   , metrics      = require("./api/metrics")
   , app          = express()
 
+// Regression scenarios
+app.set('request-latency', 0);
+app.set('request-latency-catalogue', 0);
 
 app.use(helpers.rewriteSlash);
 app.use(metrics);
