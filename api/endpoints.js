@@ -5,7 +5,7 @@
 
   var domain = "";
   process.argv.forEach(function (val, index, array) {
-    console.log("Paramater " + val);
+    console.log("Paramater: " + val);
     var arg = val.split("=");
     if (arg.length > 1) {
       if (arg[0] == "--domain") {
@@ -16,7 +16,7 @@
   });
 
   if (domain == "") {
-    console.log(process.env.DOMAIN);
+    console.log("Environment variable: " + process.env.DOMAIN);
     if (process.env.DOMAIN != undefined) {
       console.log("Setting domain to default (for PCF): .apps.pcfeu.dev.dynatracelabs.com");
       domain = process.env.DOMAIN;
