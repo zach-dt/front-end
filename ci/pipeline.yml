@@ -28,13 +28,13 @@ resources:
   type: git
   source:
     branch: master
-    uri: https://github.com/acm-workshop/sockshop.git
+    uri: https://github.com/acm-workshop-concourse/sockshop.git
 
 - name: git-front-end
   type: git
   source:
     branch: master
-    uri: https://github.com/acm-workshop/front-end.git
+    uri: https://github.com/acm-workshop-concourse/front-end.git
 
 
 # - name: dynatrace
