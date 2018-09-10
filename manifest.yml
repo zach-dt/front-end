@@ -1,9 +1,13 @@
 ---
 applications:
-- name: front-end
+- name: APPNAME
   memory: 512M
   instances: 1
   docker:
-    image: jbraeuer/front-end
+    image: DOCKER_HUB_ACCOUNT/front-end
   env:
     DOMAIN: .apps.pcfeu.dev.dynatracelabs.com
+    DT_NODE_ID: APPNAME
+    DT_CUSTOM_PROP: DEPLOYMENT_GRP_NAME=DTGRP DEPLOYMENT_COLOR=APPCOLOR
+    DEPLOYMENT_GRP_NAME: DTGRP
+    DUMMY_VAR: changethisagain2
