@@ -1,0 +1,212 @@
+---
+groups:
+- name: front-end-jobs
+  jobs:
+  - build-front-end
+  - deploy-front-end-to-stage
+  - health-check
+  - deploy-front-end-to-prod
+  - execute-front-end-load-tests
+  - deploy-front-end-to-production
+  - execute-load-like-production
+
+- name: init-dynatrace
+  jobs: 
+  - init-dynatrace-front-end
+
+resource_types:
+- name: dynatrace-resource
+  type: docker-image
+  source:
+    repository: mvilliger/dynatrace-resource
+
+resources:
+
+- name: git-pipeline
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/acm-workshop-concourse/sockshop.git
+
+- name: git-jmeter-as-container
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/acm-workshop/jmeter-as-container.git
+
+- name: git-front-end
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/acm-workshop-concourse/front-end.git
+
+#- name: dynatrace
+#  type: dynatrace-resource
+#  source:
+#    apitoken: ((apitoken))
+#    tenanthost: ((tenanthost))
+
+- name: front-end-image
+  type: docker-image
+  source:
+    repository: ((docker-hub-username))/front-end
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
+
+# PCF Environments
+
+- name: pcf-stage
+  type: cf
+  source:
+    api: ((pcf-stage-api))
+    username: ((pcf-stage-deploy-username))
+    password: ((pcf-stage-deploy-password))
+    organization: ((pcf-stage-organization))
+    space: ((pcf-stage-space))
+    skip_cert_check: false
+
+- name: pcf-production
+  type: cf
+  source:
+    api: ((pcf-prod-api))
+    username: ((pcf-prod-deploy-username))
+    password: ((pcf-prod-deploy-password))
+    organization: ((pcf-prod-organization))
+    space: ((pcf-prod-space))
+    skip_cert_check: false
+
+jobs:
+
+# Initialize Dynatrace Custom Device
+
+- name: init-dynatrace-front-end
+  public: true
+  plan:
+  - aggregate:
+    - get: git-pipeline
+    - get: git-front-end 
+  - task: init-dynatrace-task
+    file: git-pipeline/deploy/cloud-foundry/ci/tasks/init-dynatrace-task.yml
+    params: 
+      apitoken: ((apitoken))
+      tenanthost: ((tenanthost))
+      APP_REPO: git-front-end
+
+# FRONT-END
+
+- name: build-front-end
+  serial: true
+  public: true
+  plan:
+  - get: git-front-end
+    trigger: false
+  - put: front-end-image
+    params:
+      build: git-front-end
+      cache_tag: latest
+
+- name: deploy-front-end-to-stage
+  serial: true
+  public: true
+  plan:
+  - get: git-front-end
+    trigger: true
+    passed:
+      - build-front-end
+  - put: pcf-stage
+    params:
+      manifest: git-front-end/manifest.yml
+
+- name: health-check
+  serial: true
+  public: true
+  plan:
+  - aggregate:
+    - get: git-front-end
+      trigger: true
+      passed:
+        - deploy-front-end-to-stage
+    - get: git-jmeter-as-container
+    - get: git-pipeline
+  - task: run-load-tests
+    file: git-pipeline/deploy/cloud-foundry/ci/tasks/health-test.yml
+    params:
+      APP_REPO: git-jmeter-as-container
+      FUNC_VALIDATION: yes
+      PRODUCTION: false
+      SCRIPT_NAME: basiccheck.jmx
+      PCF_APP_SUFFIX: ((pcf-stage-front-end-suffix))
+      PCF_APP_DOMAIN: ((pcf-prod-app-domain))
+      DT_LTN: HealthCheck
+      VUCount: 1
+      LoopCount: 1
+
+- name: deploy-front-end-to-prod
+  serial: true
+  public: true
+  plan:
+  - aggregate:
+    - get: git-front-end
+      trigger: true
+      passed:
+        - health-check
+  - put: pcf-production
+    params:
+      manifest: git-front-end/manifest.yml 
+
+- name: execute-front-end-load-tests
+  serial: true
+  public: true
+  plan:
+  - aggregate:
+    - get: git-front-end
+      trigger: true
+      passed:
+        - deploy-front-end-to-prod
+  - task: run-load-tests
+    image: front-end-test-image
+    config:
+      platform: linux
+      inputs:
+      - name: git-front-end
+      run:
+        dir: git-front-end
+        path: /bin/bash
+        args:
+        - -exc
+        - |
+          yarn install
+          bash test/e2e/runner.sh
+
+- name: deploy-front-end-to-production
+  serial: true
+  public: true
+  plan:
+  - aggregate:
+    - get: git-front-end
+      trigger: true
+      passed:
+        - execute-front-end-load-tests
+  - put: pcf-production
+    params:
+      manifest: git-front-end/manifest.yml 
+
+- name: execute-load-like-production
+  serial: true
+  public: true
+  plan:
+  - aggregate:
+    - get: git-front-end
+      trigger: true
+      passed:
+        - deploy-front-end-to-production
+  - task: run-functional-tests
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source: {repository: busybox}
+      run:
+        path: echo
+        args: [hello world]
+

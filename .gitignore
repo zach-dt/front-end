@@ -1,7 +1,9 @@
-# Ignore npm installed packages
+# Ignore npm installed packages	# Credentials
 /node_modules
-
-# Ignore coverage reports
-/coverage
-
+jmeter.log
+# Ignore coverage reports	
+/coverage	
 .idea
+# Credentials
+credentials.yml
+jmeter.log
