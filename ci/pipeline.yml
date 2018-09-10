@@ -26,25 +26,25 @@ resources:
   type: git
   source:
     branch: master
-    uri: https://github.com/acm-workshop-concourse/sockshop.git
+    uri: https://github.com/dynatrace-sockshop/sockshop.git
 
 - name: git-jmeter-as-container
   type: git
   source:
     branch: master
-    uri: https://github.com/acm-workshop/jmeter-as-container.git
+    uri: https://github.com/dynatrace-sockshop/jmeter-as-container.git
 
 - name: git-front-end
   type: git
   source:
     branch: master
-    uri: https://github.com/acm-workshop-concourse/front-end.git
+    uri: https://github.com/dynatrace-sockshop/front-end.git
 
-#- name: dynatrace
-#  type: dynatrace-resource
-#  source:
-#    apitoken: ((apitoken))
-#    tenanthost: ((tenanthost))
+- name: dynatrace
+  type: dynatrace-resource
+  source:
+    apitoken: ((apitoken))
+    tenanthost: ((tenanthost))
 
 - name: front-end-image
   type: docker-image
@@ -113,9 +113,23 @@ jobs:
     trigger: true
     passed:
       - build-front-end
+  - get: git-pipeline
+    trigger: false      
+  - task: prepare-app-manifest
+    file: git-pipeline/deploy/cloud-foundry/ci/tasks/app-manifest-prep.yml
+    params:
+      PCF_APP_SUFFIX: ((pcf-stage-front-end-suffix)) 
+      DOCKER_HUB_ACCOUNT: ((docker-hub-username))
+      APP_REPO: git-front-end           
+  - put: dynatrace
+    params:
+      monspecserviceenvironment: front-end/Staging
+      pipelinetaskname: deploy-front-end-to-stage
+      deployversion: v1.0
+      APP_REPO: git-front-end
   - put: pcf-stage
     params:
-      manifest: git-front-end/manifest.yml
+      manifest: app-manifest-output/manifest.yml
 
 - name: health-check
   serial: true
@@ -145,14 +159,37 @@ jobs:
   serial: true
   public: true
   plan:
-  - aggregate:
-    - get: git-front-end
-      trigger: true
-      passed:
-        - health-check
+  - get: git-front-end
+    trigger: true
+    passed:
+      - health-check
+  - get: git-pipeline
+    trigger: false      
+  - task: get-current-app-color
+    file: git-pipeline/deploy/cloud-foundry/ci/tasks/current-app-get-info.yml
+    params:
+      PCF_APP_SUFFIX: ((pcf-prod-front-end-suffix))
+      PCF_API: ((pcf-prod-api))
+      PCF_ORG: ((pcf-prod-organization))
+      PCF_USER: ((pcf-prod-deploy-username))
+      PCF_PWD: ((pcf-prod-deploy-password))
+      PCF_SPACE: ((pcf-prod-space))   
+  - task: prepare-app-manifest
+    file: git-pipeline/deploy/cloud-foundry/ci/tasks/app-manifest-prep.yml
+    params:
+      PCF_APP_SUFFIX: ((pcf-prod-front-end-suffix)) 
+      DOCKER_HUB_ACCOUNT: ((docker-hub-username))
+      APP_REPO: git-front-end
+      PRODUCTION: true                 
+  - put: dynatrace
+    params:
+      monspecserviceenvironment: front-end/Production
+      pipelinetaskname: deploy-front-end-to-prod
+      deployversion: v1.0 
+      APP_REPO: git-front-end 
   - put: pcf-production
     params:
-      manifest: git-front-end/manifest.yml 
+      manifest: app-manifest-output/manifest.yml 
 
 - name: execute-front-end-load-tests
   serial: true
@@ -164,7 +201,6 @@ jobs:
       passed:
         - deploy-front-end-to-prod
   - task: run-load-tests
-    image: front-end-test-image
     config:
       platform: linux
       inputs:
