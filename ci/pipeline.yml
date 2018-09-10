@@ -3,10 +3,9 @@ groups:
 - name: front-end-jobs
   jobs:
   - build-front-end
-  - build-front-end-test-image
   - deploy-front-end-to-stage
-  - execute-front-end-functional-tests
-  - deploy-front-end-to-loadtest
+  - health-check
+  - deploy-front-end-to-prod
   - execute-front-end-load-tests
   - deploy-front-end-to-production
   - execute-load-like-production
@@ -23,12 +22,17 @@ resource_types:
 
 resources:
 
-# GitHub Repositories
 - name: git-pipeline
   type: git
   source:
     branch: master
     uri: https://github.com/acm-workshop-concourse/sockshop.git
+
+- name: git-jmeter-as-container
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/acm-workshop/jmeter-as-container.git
 
 - name: git-front-end
   type: git
@@ -36,14 +40,11 @@ resources:
     branch: master
     uri: https://github.com/acm-workshop-concourse/front-end.git
 
-
-# - name: dynatrace
-#   type: dynatrace-resource
-#   source:
-#     apitoken: ((apitoken))
-#     tenanthost: ((tenanthost))
-
-# Docker Images
+#- name: dynatrace
+#  type: dynatrace-resource
+#  source:
+#    apitoken: ((apitoken))
+#    tenanthost: ((tenanthost))
 
 - name: front-end-image
   type: docker-image
@@ -51,14 +52,6 @@ resources:
     repository: ((docker-hub-username))/front-end
     username: ((docker-hub-username))
     password: ((docker-hub-password))
-
-- name: front-end-test-image
-  type: docker-image
-  source:
-    repository: ((docker-hub-username))/front-end-test
-    username: ((docker-hub-username))
-    password: ((docker-hub-password))
-
 
 # PCF Environments
 
@@ -112,36 +105,6 @@ jobs:
       build: git-front-end
       cache_tag: latest
 
-- name: build-front-end-test-image
-  serial: true
-  public: true
-  plan:
-  - get: git-front-end
-    trigger: false
-  - task: exchange-dockerfile
-    config:
-      platform: linux
-      image_resource:
-        type: docker-image
-        source: {repository: busybox}
-      inputs:
-      - name: git-front-end
-      outputs:
-      - name: workspace
-      run:
-        path: /bin/sh
-        args:
-        - -exc
-        - |
-          output_dir=workspace
-          rm git-front-end/Dockerfile
-          cp git-front-end/test/Dockerfile git-front-end/
-          cp -R git-front-end/. "${output_dir}/"
-  - put: front-end-test-image
-    params:
-      build: workspace
-      cache_tag: latest
-
 - name: deploy-front-end-to-stage
   serial: true
   public: true
@@ -154,7 +117,7 @@ jobs:
     params:
       manifest: git-front-end/manifest.yml
 
-- name: execute-front-end-functional-tests
+- name: health-check
   serial: true
   public: true
   plan:
@@ -163,25 +126,22 @@ jobs:
       trigger: true
       passed:
         - deploy-front-end-to-stage
-    - get: front-end-test-image
-      passed:
-        - build-front-end-test-image
-  - task: run-functional-tests
-    image: front-end-test-image
-    config:
-      platform: linux
-      inputs:
-      - name: git-front-end
-      run:
-        dir: git-front-end
-        path: /bin/sh
-        args:
-        - -exc
-        - |
-          yarn install
-          npm test
+    - get: git-jmeter-as-container
+    - get: git-pipeline
+  - task: run-load-tests
+    file: git-pipeline/deploy/cloud-foundry/ci/tasks/health-test.yml
+    params:
+      APP_REPO: git-jmeter-as-container
+      FUNC_VALIDATION: yes
+      PRODUCTION: false
+      SCRIPT_NAME: basiccheck.jmx
+      PCF_APP_SUFFIX: ((pcf-stage-front-end-suffix))
+      PCF_APP_DOMAIN: ((pcf-prod-app-domain))
+      DT_LTN: HealthCheck
+      VUCount: 1
+      LoopCount: 1
 
-- name: deploy-front-end-to-loadtest
+- name: deploy-front-end-to-prod
   serial: true
   public: true
   plan:
@@ -189,7 +149,7 @@ jobs:
     - get: git-front-end
       trigger: true
       passed:
-        - execute-front-end-functional-tests
+        - health-check
   - put: pcf-production
     params:
       manifest: git-front-end/manifest.yml 
@@ -202,10 +162,7 @@ jobs:
     - get: git-front-end
       trigger: true
       passed:
-        - deploy-front-end-to-loadtest
-    - get: front-end-test-image
-      passed:
-        - build-front-end-test-image
+        - deploy-front-end-to-prod
   - task: run-load-tests
     image: front-end-test-image
     config:
