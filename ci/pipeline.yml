@@ -26,32 +26,25 @@ resources:
   type: git
   source:
     branch: master
-    uri: https://github.com/dynatrace-sockshop/sockshop.git
+    uri: https://github.com/((workshop-repository))/sockshop.git
 
 - name: git-jmeter-as-container
   type: git
   source:
     branch: master
-    uri: https://github.com/dynatrace-sockshop/jmeter-as-container.git
+    uri: https://github.com/((workshop-repository))/jmeter-as-container.git
 
 - name: git-front-end
   type: git
   source:
     branch: master
-    uri: https://github.com/dynatrace-sockshop/front-end.git
+    uri: https://github.com/((workshop-repository))/front-end.git
 
 - name: dynatrace
   type: dynatrace-resource
   source:
     apitoken: ((apitoken))
     tenanthost: ((tenanthost))
-
-#- name: front-end-image
-#  type: docker-image
-#  source:
-#    repository: ((docker-hub-username))/front-end
-#    username: ((docker-hub-username))
-#    password: ((docker-hub-password))
 
 # PCF Environments
 
@@ -190,7 +183,8 @@ jobs:
       APP_REPO: git-front-end 
   - put: pcf-production
     params:
-      manifest: app-manifest-output/manifest.yml 
+      path: git-front-end
+      manifest: app-manifest-output/manifest.yml
 
 - name: execute-front-end-load-tests
   serial: true
