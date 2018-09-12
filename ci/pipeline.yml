@@ -2,13 +2,13 @@
 groups:
 - name: front-end-jobs
   jobs:
-#  - build-front-end
+  - build-front-end
   - deploy-front-end-to-stage
   - health-check
   - deploy-front-end-to-prod
   - execute-front-end-load-tests
-  - deploy-front-end-to-production
-  - execute-load-like-production
+  - validate-front-end-load-test
+  - promote-new-version-front-end
 
 - name: init-dynatrace
   jobs: 
@@ -45,6 +45,26 @@ resources:
   source:
     apitoken: ((apitoken))
     tenanthost: ((tenanthost))
+
+- name: front-end-release-bucket
+  type: s3
+  source:
+    region_name: eu-west-1
+    regexp: front-end/front-end-(.*).tar
+    bucket: ((s3-bucket))
+    access_key_id: ((s3-access-key-id))
+    secret_access_key: ((s3-secret-access-key))
+
+- name: version
+  type: semver
+  source:
+    driver: s3
+    initial_version: 0.0.1
+    region_name: eu-west-1
+    bucket: ((s3-bucket))
+    access_key_id: ((s3-access-key-id))
+    secret_access_key: ((s3-secret-access-key))
+    key: front-end/version
 
 # PCF Environments
 
@@ -87,25 +107,41 @@ jobs:
 
 # FRONT-END
 
-#- name: build-front-end
-#  serial: true
-#  public: true
-#  plan:
-#  - get: git-front-end
-#    trigger: false
-#  - put: front-end-image
-#    params:
-#      build: git-front-end
-#      cache_tag: latest
-
-- name: deploy-front-end-to-stage
-  serial: true
-  public: true
+- name: build-front-end
   plan:
   - get: git-front-end
-#    trigger: true
-#    passed:
-#      - build-front-end
+    trigger: false
+  - get: version
+    params: { bump: patch }
+  - task: create-tarball
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source: {repository: busybox}
+      inputs:
+      - name: git-front-end
+      - name: version
+      outputs:
+      - name: workspace
+      run:
+        path: /bin/sh
+        args:
+        - -exc
+        - |
+          output_dir=workspace
+          cp git-front-end/server.js "${output_dir}/"
+          tar -cf "${output_dir}"/front-end-$(cat version/number).tar "${output_dir}"/server.js
+  - put: front-end-release-bucket
+    params: 
+      file: workspace/front-end-*.tar
+
+- name: deploy-front-end-to-stage
+  plan:
+  - get: git-front-end
+    trigger: true
+    passed:
+      - build-front-end
   - get: git-pipeline
     trigger: false      
   - task: prepare-app-manifest
@@ -187,57 +223,81 @@ jobs:
       manifest: app-manifest-output/manifest.yml
 
 - name: execute-front-end-load-tests
-  serial: true
-  public: true
   plan:
   - aggregate:
     - get: git-front-end
       trigger: true
       passed:
         - deploy-front-end-to-prod
-  - task: run-load-tests
-    config:
-      platform: linux
-      inputs:
-      - name: git-front-end
-      run:
-        dir: git-front-end
-        path: /bin/bash
-        args:
-        - -exc
-        - |
-          yarn install
-          bash test/e2e/runner.sh
+#  - task: run-load-tests
+#    config:
+#      platform: linux
+#      inputs:
+#      - name: git-front-end
+#      run:
+#        dir: git-front-end
+#        path: /bin/bash
+#        args:
+#        - -exc
+#        - |
+#          yarn install
+#          bash test/e2e/runner.sh
 
-- name: deploy-front-end-to-production
-  serial: true
-  public: true
+- name: validate-front-end-load-test
   plan:
-  - aggregate:
-    - get: git-front-end
-      trigger: true
-      passed:
-        - execute-front-end-load-tests
-  - put: pcf-production
+  - get: git-front-end
+    trigger: true
+    passed:
+      - execute-front-end-load-tests
+  - get: git-pipeline
+    trigger: false      
+  - task: get-current-app-color
+    file: git-pipeline/deploy/cloud-foundry/ci/tasks/current-app-get-info.yml
     params:
-      manifest: git-front-end/manifest.yml 
+      PCF_APP_SUFFIX: ((pcf-prod-front-end-suffix))
+      PCF_API: ((pcf-prod-api))
+      PCF_ORG: ((pcf-prod-organization))
+      PCF_USER: ((pcf-prod-deploy-username))
+      PCF_PWD: ((pcf-prod-deploy-password))
+      PCF_SPACE: ((pcf-prod-space))       
+  - task: validate-via-monspec
+    file: git-pipeline/deploy/cloud-foundry/ci/tasks/validate-via-monspec.yml
+    params: 
+      monspeccomparison: front-end/Production-$NEXT_APP_COLOR\ToProduction-$CURRENT_APP_COLOR\Last5m
+      apitoken: ((apitoken))
+      tenanthost: ((tenanthost))
+      APP_REPO: git-front-end
 
-- name: execute-load-like-production
+- name: promote-new-version-front-end
   serial: true
   public: true
   plan:
-  - aggregate:
-    - get: git-front-end
-      trigger: true
-      passed:
-        - deploy-front-end-to-production
-  - task: run-functional-tests
-    config:
-      platform: linux
-      image_resource:
-        type: docker-image
-        source: {repository: busybox}
-      run:
-        path: echo
-        args: [hello world]
-
+  - get: git-front-end
+    trigger: true
+    passed:
+      - validate-front-end-load-test
+  - get: version
+    params: { bump: patch }
+  - get: git-pipeline
+    trigger: false      
+  - task: get-current-app-color
+    file: git-pipeline/deploy/cloud-foundry/ci/tasks/current-app-get-info.yml
+    params:
+      PCF_APP_SUFFIX: ((pcf-prod-front-end-suffix))
+      PCF_API: ((pcf-prod-api))
+      PCF_ORG: ((pcf-prod-organization))
+      PCF_USER: ((pcf-prod-deploy-username))
+      PCF_PWD: ((pcf-prod-deploy-password))
+      PCF_SPACE: ((pcf-prod-space))   
+  - task: switch-app-routes
+    file: git-pipeline/deploy/cloud-foundry/ci/tasks/update-routes.yml
+    params:
+      PCF_APP_SUFFIX: ((pcf-prod-front-end-suffix))
+      PCF_API: ((pcf-prod-api))
+      PCF_ORG: ((pcf-prod-organization))
+      PCF_USER: ((pcf-prod-deploy-username))
+      PCF_PWD: ((pcf-prod-deploy-password))
+      PCF_SPACE: ((pcf-prod-space))
+      PCF_APP_DOMAIN: ((pcf-prod-app-domain))
+  - put: version
+    params: { file: version/number }
