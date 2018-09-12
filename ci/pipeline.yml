@@ -2,7 +2,7 @@
 groups:
 - name: front-end-jobs
   jobs:
-  - build-front-end
+#  - build-front-end
   - deploy-front-end-to-stage
   - health-check
   - deploy-front-end-to-prod
@@ -46,12 +46,12 @@ resources:
     apitoken: ((apitoken))
     tenanthost: ((tenanthost))
 
-- name: front-end-image
-  type: docker-image
-  source:
-    repository: ((docker-hub-username))/front-end
-    username: ((docker-hub-username))
-    password: ((docker-hub-password))
+#- name: front-end-image
+#  type: docker-image
+#  source:
+#    repository: ((docker-hub-username))/front-end
+#    username: ((docker-hub-username))
+#    password: ((docker-hub-password))
 
 # PCF Environments
 
@@ -94,25 +94,25 @@ jobs:
 
 # FRONT-END
 
-- name: build-front-end
-  serial: true
-  public: true
-  plan:
-  - get: git-front-end
-    trigger: false
-  - put: front-end-image
-    params:
-      build: git-front-end
-      cache_tag: latest
+#- name: build-front-end
+#  serial: true
+#  public: true
+#  plan:
+#  - get: git-front-end
+#    trigger: false
+#  - put: front-end-image
+#    params:
+#      build: git-front-end
+#      cache_tag: latest
 
 - name: deploy-front-end-to-stage
   serial: true
   public: true
   plan:
   - get: git-front-end
-    trigger: true
-    passed:
-      - build-front-end
+#    trigger: true
+#    passed:
+#      - build-front-end
   - get: git-pipeline
     trigger: false      
   - task: prepare-app-manifest
@@ -129,6 +129,7 @@ jobs:
       APP_REPO: git-front-end
   - put: pcf-stage
     params:
+      path: git-front-end
       manifest: app-manifest-output/manifest.yml
 
 - name: health-check
