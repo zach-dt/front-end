@@ -175,7 +175,7 @@ jobs:
         - deploy-front-end-to-stage
     - get: git-jmeter-as-container
     - get: git-pipeline
-  - task: run-load-tests
+  - task: run-health-check
     file: git-pipeline/deploy/cloud-foundry/ci/tasks/health-test.yml
     params:
       APP_REPO: git-jmeter-as-container
