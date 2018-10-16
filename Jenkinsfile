@@ -72,8 +72,8 @@ pipeline {
           parameters: [
             string(name: 'SCRIPT_NAME', value: 'basiccheck.jmx'),
             string(name: 'SERVER_URL', value: "${env.APP_NAME}.dev"),
-            string(name: 'SERVER_PORT', value: '80'),
-            string(name: 'CHECK_PATH', value: '/health'),
+            string(name: 'SERVER_PORT', value: '8080'),
+            string(name: 'CHECK_PATH', value: '/'),
             string(name: 'VUCount', value: '1'),
             string(name: 'LoopCount', value: '1'),
             string(name: 'DT_LTN', value: "HealthCheck_${BUILD_NUMBER}"),
@@ -83,7 +83,7 @@ pipeline {
           ]
       }
     }
-    /*
+    
     stage('Run functional check in dev') {
       when {
         expression {
@@ -95,7 +95,7 @@ pipeline {
           parameters: [
             string(name: 'SCRIPT_NAME', value: "${env.APP_NAME}_load.jmx"),
             string(name: 'SERVER_URL', value: "${env.APP_NAME}.dev"),
-            string(name: 'SERVER_PORT', value: '80'),
+            string(name: 'SERVER_PORT', value: '8080'),
             string(name: 'CHECK_PATH', value: '/health'),
             string(name: 'VUCount', value: '1'),
             string(name: 'LoopCount', value: '1'),
@@ -132,6 +132,6 @@ pipeline {
         echo "apply sockshop deployment yaml to staging environment"
       }
     }
-    */
+    
   }
 }
