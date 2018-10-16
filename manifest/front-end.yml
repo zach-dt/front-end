@@ -34,17 +34,21 @@ spec:
             drop:
               - all
           readOnlyRootFilesystem: true
-        probePath: /
         livenessProbe:
+          httpGet:
+            path: /
+            port: 8079
           initialDelaySeconds: 120
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 1
         readinessProbe:
+          httpGet:
+            path: /
+            port: 8079
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 1
-        terminationGracePeriodSeconds: 10
       nodeSelector:
         beta.kubernetes.io/os: linux
 ---
