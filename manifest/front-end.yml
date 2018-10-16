@@ -51,6 +51,7 @@ spec:
           timeoutSeconds: 1
       nodeSelector:
         beta.kubernetes.io/os: linux
+        
 ---
 apiVersion: v1
 kind: Service
@@ -63,5 +64,7 @@ spec:
   ports:
   - name: http
     port: 8079
+    targetPort: 8079
   selector:
     app: front-end
+  type: LoadBalancer
