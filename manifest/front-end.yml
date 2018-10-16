@@ -23,7 +23,7 @@ spec:
             cpu: 100m
             memory: 300Mi
         ports:
-        - containerPort: 8079
+        - containerPort: 8080
         env:
         - name: SESSION_REDIS
           value: "true"
@@ -45,13 +45,13 @@ spec:
         readinessProbe:
           httpGet:
             path: /
-            port: 8079
+            port: 8080
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 1
       nodeSelector:
         beta.kubernetes.io/os: linux
-        
+
 ---
 apiVersion: v1
 kind: Service
@@ -63,8 +63,8 @@ metadata:
 spec:
   ports:
   - name: http
-    port: 8079
-    targetPort: 8079
+    port: 8080
+    targetPort: 8080
   selector:
     app: front-end
   type: LoadBalancer
