@@ -58,59 +58,6 @@ pipeline {
         }
       }
     }
-    
-    stage('Run health check in dev') {
-      when {
-        expression {
-          return env.BRANCH_NAME ==~ 'release/.*' || env.BRANCH_NAME ==~'master'
-        }
-      }
-      steps {
-        /*
-        sleep 30
-
-        build job: "jmeter-tests",
-          parameters: [
-            string(name: 'SCRIPT_NAME', value: 'basiccheck.jmx'),
-            string(name: 'SERVER_URL', value: "${env.APP_NAME}.dev"),
-            string(name: 'SERVER_PORT', value: '8080'),
-            string(name: 'CHECK_PATH', value: '/'),
-            string(name: 'VUCount', value: '1'),
-            string(name: 'LoopCount', value: '1'),
-            string(name: 'DT_LTN', value: "HealthCheck_${BUILD_NUMBER}"),
-            string(name: 'FUNC_VALIDATION', value: 'yes'),
-            string(name: 'AVG_RT_VALIDATION', value: '0'),
-            string(name: 'RETRY_ON_ERROR', value: 'yes')
-          ]
-        */
-        echo "skipping since no tests for front-end are defined"
-      }
-    }
-    
-    stage('Run functional check in dev') {
-      when {
-        expression {
-          return env.BRANCH_NAME ==~ 'release/.*' || env.BRANCH_NAME ==~'master'
-        }
-      }
-      steps {
-        /*
-        build job: "jmeter-tests",
-          parameters: [
-            string(name: 'SCRIPT_NAME', value: "${env.APP_NAME}_load.jmx"),
-            string(name: 'SERVER_URL', value: "${env.APP_NAME}.dev"),
-            string(name: 'SERVER_PORT', value: '8080'),
-            string(name: 'CHECK_PATH', value: '/health'),
-            string(name: 'VUCount', value: '1'),
-            string(name: 'LoopCount', value: '1'),
-            string(name: 'DT_LTN', value: "FuncCheck_${BUILD_NUMBER}"),
-            string(name: 'FUNC_VALIDATION', value: 'yes'),
-            string(name: 'AVG_RT_VALIDATION', value: '0')
-          ]
-          */
-        echo "skipping since no tests for front-end are defined"
-      }
-    }
     stage('Mark artifact for staging namespace') {
       when {
         expression {
