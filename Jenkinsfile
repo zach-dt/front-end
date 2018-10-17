@@ -66,6 +66,7 @@ pipeline {
         }
       }
       steps {
+        /*
         sleep 30
 
         build job: "jmeter-tests",
@@ -81,6 +82,8 @@ pipeline {
             string(name: 'AVG_RT_VALIDATION', value: '0'),
             string(name: 'RETRY_ON_ERROR', value: 'yes')
           ]
+        */
+        echo "skipping since no tests for front-end are defined"
       }
     }
     
@@ -91,6 +94,7 @@ pipeline {
         }
       }
       steps {
+        /*
         build job: "jmeter-tests",
           parameters: [
             string(name: 'SCRIPT_NAME', value: "${env.APP_NAME}_load.jmx"),
@@ -103,6 +107,8 @@ pipeline {
             string(name: 'FUNC_VALIDATION', value: 'yes'),
             string(name: 'AVG_RT_VALIDATION', value: '0')
           ]
+          */
+        echo "skipping since no tests for front-end are defined"
       }
     }
     stage('Mark artifact for staging namespace') {
