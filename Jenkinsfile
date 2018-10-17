@@ -1,6 +1,6 @@
 pipeline {
   agent {
-    label 'jenkins-nodejs'
+    label 'nodejs'
   }
   environment {
     APP_NAME = "front-end"
