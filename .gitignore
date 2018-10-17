@@ -7,3 +7,4 @@ jmeter.log
 # Credentials
 credentials.yml
 jmeter.log
+*-old
