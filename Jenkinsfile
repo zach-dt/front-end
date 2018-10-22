@@ -90,7 +90,6 @@ pipeline {
             sh 'cd k8s-deploy-staging/ && git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/dynatrace-sockshop/k8s-deploy-staging'
         }
       }
-    }
-    
+    }  
   }
 }
