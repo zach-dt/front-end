@@ -7,8 +7,8 @@ pipeline {
     ARTEFACT_ID = "sockshop/" + "${env.APP_NAME}"
     VERSION = readFile 'version'
     TAG = "10.31.240.247:5000/library/${env.ARTEFACT_ID}"
-    //TAG_DEV = "${env.TAG}-${env.VERSION}-${env.BUILD_NUMBER}"
-    TAG_DEV = "${env.TAG}:dev"
+    TAG_DEV = "${env.TAG}-${env.VERSION}-${env.BUILD_NUMBER}"
+    //TAG_DEV = "${env.TAG}:dev"
     TAG_STAGING = "${env.TAG}-${env.VERSION}"
   }
   stages {
@@ -54,6 +54,7 @@ pipeline {
       }
       steps {
         container('kubectl') {
+          sh "sed -i 's#image: .*#image: ${env.TAG_DEV}#' manifest/front-end.yml"
           sh "kubectl -n dev apply -f manifest/front-end.yml"
         }
       }
