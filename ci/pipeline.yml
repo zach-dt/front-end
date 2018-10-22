@@ -9,6 +9,7 @@ groups:
   - execute-front-end-load-tests
   - validate-front-end-load-test
   - promote-new-version-front-end
+  - upload-front-end-git-release
 
 - name: init-dynatrace
   jobs: 
@@ -22,6 +23,15 @@ resource_types:
 
 resources:
 
+#GitHub Release Repository
+- name: front-end-release
+  type: github-release
+  source:
+    owner: acm-workshop-concourse
+    repository: front-end
+    access_token: ((github-access-token))
+
+# GitHub Repositories
 - name: git-pipeline
   type: git
   source:
@@ -58,13 +68,6 @@ resources:
 - name: version
   type: semver
   source:
-#    driver: s3
-#    initial_version: 0.0.1
-#    region_name: eu-west-1
-#    bucket: ((s3-bucket))
-#    access_key_id: ((s3-access-key-id))
-#    secret_access_key: ((s3-secret-access-key))
-#    key: front-end/version
     driver: git
     uri: https://github.com/((workshop-repository))/front-end.git
     branch: master
@@ -116,7 +119,7 @@ jobs:
   - get: git-front-end
     trigger: false
   - get: version
-    params: { pre: rc }
+    params: { pre: build }
   - task: create-tarball
     config:
       platform: linux
@@ -175,7 +178,7 @@ jobs:
         - deploy-front-end-to-stage
     - get: git-jmeter-as-container
     - get: git-pipeline
-  - task: run-load-tests
+  - task: run-health-check
     file: git-pipeline/deploy/cloud-foundry/ci/tasks/health-test.yml
     params:
       APP_REPO: git-jmeter-as-container
@@ -277,7 +280,7 @@ jobs:
   - get: git-front-end
     trigger: true
     passed:
-      - validate-front-end-load-test
+      - execute-front-end-load-tests
   - get: version
     params: { bump: patch }
   - get: git-pipeline
@@ -301,5 +304,28 @@ jobs:
       PCF_PWD: ((pcf-prod-deploy-password))
       PCF_SPACE: ((pcf-prod-space))
       PCF_APP_DOMAIN: ((pcf-prod-app-domain))
+
+- name: upload-front-end-git-release
+  public: true
+  plan:
+  - aggregate:
+    - get: git-front-end
+      trigger: true
+      passed: 
+        - promote-new-version-front-end
+    - get: front-end-release-bucket
+    - get: git-pipeline
+    - get: version
+      params: { pre: build }
+  - task: create-front-end-release-info
+    file: git-pipeline/deploy/cloud-foundry/ci/tasks/prepare-release.yml
+    params:
+      APP_NAME: front-end
+  - put: front-end-release
+    params:
+      name: prepared-release/name
+      tag: prepared-release/tag
+#      globs:
+#      - front-end-release-bucket/front-end-*.jar
 #  - put: version
 #    params: { file: version/number }
