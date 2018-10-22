@@ -37,7 +37,7 @@ spec:
         livenessProbe:
           httpGet:
             path: /
-            port: 8080
+            port: 80
           initialDelaySeconds: 120
           periodSeconds: 10
           successThreshold: 1
@@ -45,7 +45,7 @@ spec:
         readinessProbe:
           httpGet:
             path: /
-            port: 8080
+            port: 80
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 1
@@ -63,7 +63,7 @@ metadata:
 spec:
   ports:
   - name: http
-    port: 8080
+    port: 80
     targetPort: 8080
   selector:
     app: front-end
