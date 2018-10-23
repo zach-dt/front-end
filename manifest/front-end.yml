@@ -14,10 +14,7 @@ spec:
     spec:
       containers:
       - name: front-end
-        image: 10.31.240.247:5000/library/sockshop/front-end:dev
-        env:
-          - name: DOMAIN
-            value: "dev"
+        image: to-be-replaced-by-jenkins
         resources:
           limits:
             cpu: 300m
