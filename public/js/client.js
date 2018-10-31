@@ -92,7 +92,7 @@ function order() {
 
     var success = false;
     $.ajax({
-        url: "orders",
+        url: "http://orders",
         type: "POST",
         async: false,
         success: function (data, textStatus, jqXHR) {
@@ -116,7 +116,7 @@ function order() {
 
 function deleteCart() {
     $.ajax({
-        url: "cart",
+        url: "http://cart",
         type: "DELETE",
         async: true,
         success: function (data, textStatus, jqXHR) {
