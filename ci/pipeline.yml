@@ -17,6 +17,11 @@ groups:
   jobs: 
   - init-dynatrace-front-end
 
+- name: performance
+  jobs:
+  - run-performance-check
+  - validate-performance-check
+
 resource_types:
 - name: dynatrace-resource
   type: docker-image
@@ -50,7 +55,7 @@ resources:
   type: dynatrace-resource
   source:
     apitoken: ((dt_api_token))
-    tenanthost: ((dt_tenant_host))
+    tenanthost: ((dt_tenant_url))
 
 - name: front-end-release-bucket
   type: s3
@@ -114,8 +119,8 @@ jobs:
   - task: init-dynatrace-task
     file: git-pipeline/deploy/cloud-foundry/ci/tasks/init-dynatrace-task.yml
     params: 
-      apitoken: ((apitoken))
-      tenanthost: ((tenanthost))
+      apitoken: ((dt_api_token))
+      tenanthost: ((dt_tenant_url))
       APP_REPO: git-front-end
 
 # FRONT-END
@@ -168,16 +173,16 @@ jobs:
       STAGE: Dev
       PCF_APP_SUFFIX: ((pcf-dev-front-end-suffix)) 
       APP_REPO: git-front-end           
-  # - put: dynatrace
-  #   params:
-  #     monspecserviceenvironment: front-end/Dev
-  #     pipelinetaskname: deploy-to-dev
-  #     deployversion: v1.0
-  #     APP_REPO: git-front-end
   - put: pcf-dev
     params:
       path: git-front-end
       manifest: app-manifest-output/manifest.yml
+  - put: dynatrace
+    params:
+      monspecserviceenvironment: front-end/Dev
+      pipelinetaskname: deploy-to-dev
+      deployversion: v1.0
+      APP_REPO: git-front-end
 
 - name: run-health-check
   serial: true
@@ -253,17 +258,17 @@ jobs:
     params:
       STAGE: Staging
       PCF_APP_SUFFIX: ((pcf-staging-front-end-suffix)) 
-      APP_REPO: git-front-end               
+      APP_REPO: git-front-end
+  - put: pcf-staging
+    params:
+      path: git-front-end
+      manifest: app-manifest-output/manifest.yml          
   - put: dynatrace
     params:
       monspecserviceenvironment: front-end/Staging
       pipelinetaskname: deploy-to-staging
       deployversion: v1.0 
       APP_REPO: git-front-end 
-  - put: pcf-staging
-    params:
-      path: git-front-end
-      manifest: app-manifest-output/manifest.yml
 
 # - name: run-e2e-test
 #   serial: true
@@ -348,16 +353,16 @@ jobs:
       STAGE: Production
       PCF_APP_SUFFIX: ((pcf-production-front-end-suffix)) 
       APP_REPO: git-front-end               
+  - put: pcf-production
+    params:
+      path: git-front-end
+      manifest: app-manifest-output/manifest.yml
   - put: dynatrace
     params:
       monspecserviceenvironment: front-end/Production
       pipelinetaskname: deploy-to-production
       deployversion: v1.0 
       APP_REPO: git-front-end 
-  - put: pcf-production
-    params:
-      path: git-front-end
-      manifest: app-manifest-output/manifest.yml
 
 - name: promote-new-version
   serial: true
@@ -413,3 +418,53 @@ jobs:
 #      - front-end-release-bucket/front-end-*.jar
 #  - put: version
 #    params: { file: version/number }
+
+- name: run-performance-check
+  serial: true
+  public: true
+  plan:
+  - aggregate:
+    - get: git-front-end
+      trigger: false
+    - get: git-pipeline
+  - task: run-performance-check
+    file: git-pipeline/deploy/cloud-foundry/ci/tasks/jmeter-test.yml
+    params:
+      APP_REPO: git-front-end
+      PRODUCTION: false
+      SCRIPT_NAME: jmeter/front-end_load.jmx
+      RESULT_DIR: PerfCheck
+      PCF_APP_SUFFIX: ((pcf-dev-front-end-suffix))
+      PCF_APP_DOMAIN: ((pcf-dev-app-domain))
+      SERVER_PORT: 80
+      VU_COUNT: 10
+      LOOP_COUNT: 25 #250
+      DT_LTN: FuncCheck
+      FUNC_VALIDATION: false
+      AVG_RT_VALIDATION: 3000
+      THINK_TIME: 0
+  - task: push-dynatrace-monspec-data
+    file: git-pipeline/deploy/cloud-foundry/ci/tasks/push-dynatrace-monspec-data.yml
+    params: 
+      monspecserviceenvironment: front-end/Dev
+      apitoken: ((dt_api_token))
+      tenanthost: ((dt_tenant_url))
+      APP_REPO: git-front-end 
+
+- name: validate-performance-check
+  serial: true
+  public: true
+  plan:
+  - get: git-front-end
+    trigger: true
+    passed:
+      - run-performance-check
+  - get: git-pipeline
+    trigger: false      
+  - task: validate-via-monspec
+    file: git-pipeline/deploy/cloud-foundry/ci/tasks/validate-via-monspec.yml
+    params: 
+      monspeccomparison: front-end/DevToDevLastHour
+      apitoken: ((dt_api_token))
+      tenanthost: ((dt_tenant_url))
+      APP_REPO: git-front-end 
