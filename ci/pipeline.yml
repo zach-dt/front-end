@@ -55,7 +55,7 @@ resources:
   type: dynatrace-resource
   source:
     apitoken: ((dt_api_token))
-    tenanthost: ((dt_tenant_url))
+    tenanthost: ((dt_tenant_host))
 
 - name: front-end-release-bucket
   type: s3
@@ -120,7 +120,7 @@ jobs:
     file: git-pipeline/deploy/cloud-foundry/ci/tasks/init-dynatrace-task.yml
     params: 
       apitoken: ((dt_api_token))
-      tenanthost: ((dt_tenant_url))
+      tenanthost: ((dt_tenant_host))
       APP_REPO: git-front-end
 
 # FRONT-END
@@ -448,7 +448,7 @@ jobs:
     params: 
       monspecserviceenvironment: front-end/Dev
       apitoken: ((dt_api_token))
-      tenanthost: ((dt_tenant_url))
+      tenanthost: ((dt_tenant_host))
       APP_REPO: git-front-end 
 
 - name: validate-performance-check
@@ -466,5 +466,5 @@ jobs:
     params: 
       monspeccomparison: front-end/DevToDevLastHour
       apitoken: ((dt_api_token))
-      tenanthost: ((dt_tenant_url))
+      tenanthost: ((dt_tenant_host))
       APP_REPO: git-front-end 

@@ -1,7 +1,7 @@
 ---
 applications:
 - name: APPNAME
-  memory: 512M
+  memory: 256M
   instances: 1
   command: npm start
   buildpack: https://github.com/cloudfoundry/nodejs-buildpack.git
