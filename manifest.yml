@@ -7,6 +7,4 @@ applications:
   buildpack: https://github.com/cloudfoundry/nodejs-buildpack.git
   env:
     DOMAIN: .apps.pcfeu.dev.dynatracelabs.com
-    DT_NODE_ID: APPNAME
-    DT_CUSTOM_PROP: DEPLOYMENT_GRP_NME=DTGRP DEPLOYMENT_COLOR=APPCOLOR
-    DEPLOYMENT_GRP_NAME: DTGRP
+    DT_CUSTOM_PROP: DEPLOYMENT_GRP_NME=DTGRP DEPLOYMENT_APP_NME=NODEID DEPLOYMENT_COLOR=APPCOLOR
